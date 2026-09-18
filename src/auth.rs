@@ -38,7 +38,7 @@ pub struct AuthError {
 
 impl AuthError {
     /// Create a new auth error.
-    pub fn new(message: &'static str) -> Self {
+    pub const fn new(message: &'static str) -> Self {
         Self { message }
     }
 }
@@ -62,8 +62,8 @@ pub struct TokenAuth {
 }
 
 impl TokenAuth {
-    /// Create a new TokenAuth with the given token.
-    pub fn new(token: Option<String>) -> Self {
+    /// Create a new `TokenAuth` with the given token.
+    pub const fn new(token: Option<String>) -> Self {
         Self { token }
     }
 
@@ -97,14 +97,11 @@ impl TokenAuth {
     /// auth.validate_env("TRMNL_TOKEN")?;
     /// ```
     pub fn validate_env(&self, env_var: &str) -> Result<(), AuthError> {
-        match std::env::var(env_var) {
-            Ok(expected) => self.validate(&expected),
-            Err(_) => Ok(()), // No token configured = open access
-        }
+        std::env::var(env_var).map_or(Ok(()), |expected| self.validate(&expected))
     }
 
     /// Check if a token was provided (without validating it).
-    pub fn has_token(&self) -> bool {
+    pub const fn has_token(&self) -> bool {
         self.token.is_some()
     }
 
@@ -114,7 +111,7 @@ impl TokenAuth {
     pub fn from_query_string(query: &str) -> Self {
         let params: HashMap<_, _> = form_urlencoded::parse(query.as_bytes()).collect();
         Self {
-            token: params.get("token").map(|s| s.to_string()),
+            token: params.get("token").map(std::string::ToString::to_string),
         }
     }
 }
@@ -201,7 +198,7 @@ mod tests {
         let auth = TokenAuth::from_query_string("token=mysecret/api/display");
         // from_query_string doesn't strip (that's in axum extractor)
         // but the token should validate if we manually strip
-        let token = auth.token.unwrap();
+        let token = auth.token.expect("token should be present");
         let clean = if let Some(idx) = token.find("/api/") {
             token[..idx].to_string()
         } else {

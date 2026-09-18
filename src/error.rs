@@ -41,13 +41,13 @@ pub enum Error {
 
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Self {
-        Error::Io(err.to_string())
+        Self::Io(err.to_string())
     }
 }
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
-        Error::Json(err.to_string())
+        Self::Json(err.to_string())
     }
 }
 

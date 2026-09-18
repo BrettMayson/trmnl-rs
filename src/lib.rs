@@ -117,7 +117,7 @@ pub mod axum_ext;
 /// assert_eq!(battery_percentage(3600), 50);
 /// assert_eq!(battery_percentage(3000), 0);
 /// ```
-pub fn battery_percentage(voltage_mv: u32) -> u8 {
+pub const fn battery_percentage(voltage_mv: u32) -> u8 {
     if voltage_mv <= BATTERY_MIN_MV {
         0
     } else if voltage_mv >= BATTERY_MAX_MV {

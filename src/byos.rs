@@ -58,7 +58,7 @@ impl DeviceInfo {
 
     /// Set battery voltage.
     #[must_use]
-    pub fn with_battery_voltage(mut self, voltage: f32) -> Self {
+    pub const fn with_battery_voltage(mut self, voltage: f32) -> Self {
         self.battery_voltage = Some(voltage);
         self
     }
@@ -72,14 +72,14 @@ impl DeviceInfo {
 
     /// Set WiFi RSSI.
     #[must_use]
-    pub fn with_rssi(mut self, rssi: i32) -> Self {
+    pub const fn with_rssi(mut self, rssi: i32) -> Self {
         self.rssi = Some(rssi);
         self
     }
 
     /// Set refresh rate.
     #[must_use]
-    pub fn with_refresh_rate(mut self, rate: u32) -> Self {
+    pub const fn with_refresh_rate(mut self, rate: u32) -> Self {
         self.refresh_rate = Some(rate);
         self
     }
@@ -147,7 +147,7 @@ pub struct DisplayResponse {
     /// Whether to trigger firmware update
     pub update_firmware: bool,
 
-    /// URL to firmware binary (if update_firmware is true)
+    /// URL to firmware binary (if `update_firmware` is true)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub firmware_url: Option<String>,
 
@@ -196,7 +196,7 @@ impl DisplayResponse {
 
     /// Trigger device reset.
     #[must_use]
-    pub fn with_reset(mut self) -> Self {
+    pub const fn with_reset(mut self) -> Self {
         self.reset_firmware = true;
         self
     }
@@ -350,7 +350,7 @@ mod tests {
         let response = DisplayResponse::new("https://example.com/screen.png", "screen.png")
             .with_refresh_rate(120);
 
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).expect("Failed to serialize DisplayResponse");
         assert!(json.contains("\"status\":0"));
         assert!(json.contains("\"refresh_rate\":\"120\""));
         assert!(json.contains("\"filename\":\"screen.png\""));
@@ -361,7 +361,7 @@ mod tests {
     fn test_setup_response() {
         let response = SetupResponse::new("my-device", "https://example.com/setup.png", "Welcome!");
 
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).expect("Failed to serialize SetupResponse");
         assert!(json.contains("\"api_key\":\"byos\""));
         assert!(json.contains("\"friendly_id\":\"my-device\""));
     }
@@ -369,11 +369,15 @@ mod tests {
     #[test]
     fn test_log_entry_parsing() {
         let json = r#"{"logMessage": "test", "deviceStatusStamp": {"battery_voltage": 4.1}}"#;
-        let entry: LogEntry = serde_json::from_str(json).unwrap();
+        let entry: LogEntry = serde_json::from_str(json).expect("Failed to parse LogEntry");
 
         assert_eq!(entry.log_message, Some("test".to_string()));
         assert_eq!(
-            entry.device_status_stamp.as_ref().unwrap().battery_voltage,
+            entry
+                .device_status_stamp
+                .as_ref()
+                .expect("device_status_stamp should be present")
+                .battery_voltage,
             Some(4.1)
         );
     }
